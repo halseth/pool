@@ -130,6 +130,18 @@ service Trader {
         };
     };
 
+    /* llm: `auction listbatches`
+    ListLocalBatchSnapshots returns a batch snapshot for all batches the trader
+    has participated in.
+    */
+    rpc ListLocalBatchSnapshots(ListLocalBatchSnapshotsRequest) returns (ListLocalBatchSnapshotsResponse) {
+        option (google.api.http) = {
+            get: "/v1/clm/accounts/batches"
+        };
+    }
+
+
+
     /* llm: `auction fee`
     AuctionFee returns the current auction order execution fee specified by the
     auction server.
@@ -428,6 +440,62 @@ message CancelOrderRequest {
     bytes order_nonce = 1;
 }
 message CancelOrderResponse {
+}
+
+message Match {
+    // The nonce of the local order that got matched.
+    bytes order_nonce = 1;
+
+    // Type is the type of the local order involved in this match.
+    string order_type = 2;
+
+    // Duration is the agreed duration in blocks of the match. This will be
+    // equal to the minimum duration of the bid part of this match.
+    uint32 duration = 3;
+
+    // The units matched.
+    uint64 units_filled = 4;
+
+    // Premium is the lump sum premium paid to the maker.
+    uint64 premium_sat = 5;
+
+    // The fee paid to the auctioneer for this match.
+    uint64 execution_fee_sat = 6;
+
+    // The key of the other node that will use to craft the channel funding
+    // TX's 2-of-2 multi signature output.
+    bytes multi_sig_key = 7;
+}
+
+message LocalBatchSnapshot {
+    // The version of the batch.
+    uint32 batch_version = 1;
+
+    // The ID of the batch.
+    bytes batch_id = 2;
+
+    // The price orders in this batch were cleared at. This is expressed as
+    // parts per billion per block.
+    uint32 clearing_price = 3;
+
+    // The fee rate that was used for the batch transaction.
+    uint64  batch_tx_fee_rate_sat_per_kw = 4;
+
+    // The transaction hash of the batch transaction.
+    bytes batch_tx = 5;
+
+    // The total chain fees paid by the trader to participate in this batch.
+    uint64  chain_fees_sat = 6;
+
+    // The matches the trader was involved in in this batch.
+    repeated Match matches = 7;
+}
+
+message ListLocalBatchSnapshotsRequest {
+}
+
+message ListLocalBatchSnapshotsResponse {
+    repeated LocalBatchSnapshot batches = 1;
 }
 
 message Order {

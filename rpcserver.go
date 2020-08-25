@@ -1251,6 +1251,81 @@ func (s *rpcServer) CancelOrder(ctx context.Context,
 	return &clmrpc.CancelOrderResponse{}, nil
 }
 
+func (s *rpcServer) ListLocalBatchSnapshots(ctx context.Context,
+	_ *clmrpc.ListLocalBatchSnapshotsRequest) (
+	*clmrpc.ListLocalBatchSnapshotsResponse, error) {
+
+	// Get snapshots for all batches we have been involved with.
+	batches, err := s.server.db.GetLocalBatchSnapshots()
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &clmrpc.ListLocalBatchSnapshotsResponse{}
+	for _, batch := range batches {
+		// Calculate the chain fee paid as a function of the number of
+		// matches.
+		var txBuf bytes.Buffer
+		if err := batch.BatchTX.Serialize(&txBuf); err != nil {
+			return nil, err
+		}
+
+		s := &clmrpc.LocalBatchSnapshot{
+			BatchVersion:           uint32(batch.Version),
+			BatchId:                batch.BatchID[:],
+			ClearingPrice:          uint32(batch.ClearingPrice),
+			BatchTx:                txBuf.Bytes(),
+			BatchTxFeeRateSatPerKw: uint64(batch.BatchTxFeeRate),
+		}
+
+		var numMatches uint32
+		for _, ourOrder := range batch.Orders {
+			nonce := ourOrder.Nonce()
+
+			for _, m := range batch.MatchedOrders[nonce] {
+				numMatches++
+				theirOrder := m.Order
+
+				// Get the bid order, as that one will
+				// determine the match's duration.
+				bid, ok := ourOrder.(*order.Bid)
+				if !ok {
+					bid = theirOrder.(*order.Bid)
+				}
+				// Calculate the premium paid to the maker in
+				// this match.
+				totalSats := m.UnitsFilled.ToSatoshis()
+				satsPremium := batch.ClearingPrice.LumpSumPremium(
+					totalSats, bid.MinDuration,
+				)
+
+				amt := m.UnitsFilled.ToSatoshis()
+				exeFee := batch.ExecutionFee.BaseFee() +
+					batch.ExecutionFee.ExecutionFee(amt)
+
+				s.Matches = append(s.Matches, &clmrpc.Match{
+					OrderNonce:      nonce[:],
+					OrderType:       ourOrder.Type().String(),
+					Duration:        bid.MinDuration,
+					UnitsFilled:     uint64(m.UnitsFilled),
+					PremiumSat:      uint64(satsPremium),
+					ExecutionFeeSat: uint64(exeFee),
+					MultiSigKey:     m.MultiSigKey[:],
+				})
+			}
+		}
+		chainFee := order.EstimateTraderFee(
+			numMatches, batch.BatchTxFeeRate,
+		)
+
+		s.ChainFeesSat = uint64(chainFee)
+
+		resp.Batches = append(resp.Batches, s)
+	}
+
+	return resp, nil
+}
+
 // sendRejectBatch sends a reject message to the server with the properly
 // decoded reason code and the full reason message as a string.
 func (s *rpcServer) sendRejectBatch(batch *order.Batch, failure error) error {

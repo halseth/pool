@@ -119,6 +119,29 @@
         ]
       }
     },
+    "/v1/clm/accounts/batches": {
+      "get": {
+        "summary": "llm: `auction listbatches`\nListLocalBatchSnapshots returns a batch snapshot for all batches the trader\nhas participated in.",
+        "operationId": "ListLocalBatchSnapshots",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/clmrpcListLocalBatchSnapshotsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/gatewayruntimeError"
+            }
+          }
+        },
+        "tags": [
+          "Trader"
+        ]
+      }
+    },
     "/v1/clm/accounts/bump": {
       "post": {
         "summary": "llm: `accounts bumpfee`\nBumpAccountFee attempts to bump the fee of an account's transaction through\nchild-pays-for-parent (CPFP). Since the CPFP is performed through the\nbacking lnd node, the account transaction must contain an output under its\ncontrol for a successful bump. If a CPFP has already been performed for an\naccount, and this RPC is invoked again, then a replacing transaction (RBF)\nof the child will be broadcast.",
@@ -777,6 +800,17 @@
         }
       }
     },
+    "clmrpcListLocalBatchSnapshotsResponse": {
+      "type": "object",
+      "properties": {
+        "batches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/clmrpcLocalBatchSnapshot"
+          }
+        }
+      }
+    },
     "clmrpcListOrdersResponse": {
       "type": "object",
       "properties": {
@@ -791,6 +825,48 @@
           "items": {
             "$ref": "#/definitions/clmrpcBid"
           }
+        }
+      }
+    },
+    "clmrpcLocalBatchSnapshot": {
+      "type": "object",
+      "properties": {
+        "batch_version": {
+          "type": "integer",
+          "format": "int64",
+          "description": "The version of the batch."
+        },
+        "batch_id": {
+          "type": "string",
+          "format": "byte",
+          "description": "The ID of the batch."
+        },
+        "clearing_price": {
+          "type": "integer",
+          "format": "int64",
+          "description": "The price orders in this batch were cleared at. This is expressed as\nparts per billion per block."
+        },
+        "batch_tx_fee_rate_sat_per_kw": {
+          "type": "string",
+          "format": "uint64",
+          "description": "The fee rate that was used for the batch transaction."
+        },
+        "batch_tx": {
+          "type": "string",
+          "format": "byte",
+          "description": "The transaction hash of the batch transaction."
+        },
+        "chain_fees_sat": {
+          "type": "string",
+          "format": "uint64",
+          "description": "The total chain fees paid by the trader to participate in this batch."
+        },
+        "matches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/clmrpcMatch"
+          },
+          "description": "The matches the trader was involved in in this batch."
         }
       }
     },
@@ -835,6 +911,45 @@
         "storage_name": {
           "type": "string",
           "description": "*\nIdentifying attribute of this token in the store. Currently represents the\nfile name of the token where it's stored on the file system."
+        }
+      }
+    },
+    "clmrpcMatch": {
+      "type": "object",
+      "properties": {
+        "order_nonce": {
+          "type": "string",
+          "format": "byte",
+          "description": "The nonce of the local order that got matched."
+        },
+        "order_type": {
+          "type": "string",
+          "description": "Type is the type of the local order involved in this match."
+        },
+        "duration": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Duration is the agreed duration in blocks of the match. This will be\nequal to the minimum duration of the bid part of this match."
+        },
+        "units_filled": {
+          "type": "string",
+          "format": "uint64",
+          "description": "The units matched."
+        },
+        "premium_sat": {
+          "type": "string",
+          "format": "uint64",
+          "description": "Premium is the lump sum premium paid to the maker."
+        },
+        "execution_fee_sat": {
+          "type": "string",
+          "format": "uint64",
+          "description": "The fee paid to the auctioneer for this match."
+        },
+        "multi_sig_key": {
+          "type": "string",
+          "format": "byte",
+          "description": "The key of the other node that will use to craft the channel funding\nTX's 2-of-2 multi signature output."
         }
       }
     },

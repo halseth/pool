@@ -392,6 +392,24 @@ func local_request_Trader_CancelOrder_0(ctx context.Context, marshaler runtime.M
 
 }
 
+func request_Trader_ListLocalBatchSnapshots_0(ctx context.Context, marshaler runtime.Marshaler, client TraderClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListLocalBatchSnapshotsRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := client.ListLocalBatchSnapshots(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_Trader_ListLocalBatchSnapshots_0(ctx context.Context, marshaler runtime.Marshaler, server TraderServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListLocalBatchSnapshotsRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := server.ListLocalBatchSnapshots(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 func request_Trader_AuctionFee_0(ctx context.Context, marshaler runtime.Marshaler, client TraderClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq AuctionFeeRequest
 	var metadata runtime.ServerMetadata
@@ -683,6 +701,26 @@ func RegisterTraderHandlerServer(ctx context.Context, mux *runtime.ServeMux, ser
 		}
 
 		forward_Trader_CancelOrder_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("GET", pattern_Trader_ListLocalBatchSnapshots_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Trader_ListLocalBatchSnapshots_0(rctx, inboundMarshaler, server, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Trader_ListLocalBatchSnapshots_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1007,6 +1045,26 @@ func RegisterTraderHandlerClient(ctx context.Context, mux *runtime.ServeMux, cli
 
 	})
 
+	mux.Handle("GET", pattern_Trader_ListLocalBatchSnapshots_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Trader_ListLocalBatchSnapshots_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Trader_ListLocalBatchSnapshots_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_Trader_AuctionFee_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -1093,6 +1151,8 @@ var (
 
 	pattern_Trader_CancelOrder_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "clm", "orders", "order_nonce"}, "", runtime.AssumeColonVerbOpt(true)))
 
+	pattern_Trader_ListLocalBatchSnapshots_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v1", "clm", "accounts", "batches"}, "", runtime.AssumeColonVerbOpt(true)))
+
 	pattern_Trader_AuctionFee_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "clm", "fee"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Trader_BatchSnapshot_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"v1", "clm", "batch", "snapshot"}, "", runtime.AssumeColonVerbOpt(true)))
@@ -1122,6 +1182,8 @@ var (
 	forward_Trader_ListOrders_0 = runtime.ForwardResponseMessage
 
 	forward_Trader_CancelOrder_0 = runtime.ForwardResponseMessage
+
+	forward_Trader_ListLocalBatchSnapshots_0 = runtime.ForwardResponseMessage
 
 	forward_Trader_AuctionFee_0 = runtime.ForwardResponseMessage
 
