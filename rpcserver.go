@@ -1209,6 +1209,41 @@ func (s *rpcServer) CancelOrder(ctx context.Context,
 	return &clmrpc.CancelOrderResponse{}, nil
 }
 
+func (s *rpcServer) ListLocalBatchSnapshots(ctx context.Context,
+	_ *clmrpc.ListLocalBatchSnapshotsRequest) (
+	*clmrpc.ListLocalBatchSnapshotsResponse, error) {
+
+	// Get snapshots for all batches we have been involved with.
+	batches, err := s.server.db.GetLocalBatchSnapshots()
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &clmrpc.ListLocalBatchSnapshotsResponse{}
+	for _, batch := range batches {
+
+		s := &clmrpc.LocalBatchSnapshot{
+			BatchId:                batch.BatchID[:],
+			BatchVersion:           uint32(batch.Version),
+			ClearingPrice:          uint32(batch.ClearingPrice),
+			BatchTxid:              batch.BatchTXID[:],
+			BatchTxFeeRateSatPerKw: uint32(batch.BatchTxFeeRate),
+		}
+
+		for _, m := range batch.Matches {
+			s.Matches = append(s.Matches, &clmrpc.Match{
+				OrderNonce:      m.Nonce[:],
+				UnitsFilled:     uint32(m.UnitsFilled),
+				ExecutionFeeSat: uint32(m.ExecutionFee),
+			})
+		}
+
+		resp.Batches = append(resp.Batches, s)
+	}
+
+	return resp, nil
+}
+
 // sendRejectBatch sends a reject message to the server with the properly
 // decoded reason code and the full reason message as a string.
 func (s *rpcServer) sendRejectBatch(batch *order.Batch, failure error) error {

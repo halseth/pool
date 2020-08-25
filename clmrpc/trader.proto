@@ -115,6 +115,18 @@ service Trader {
         };
     };
 
+    /* llm: `auction listbatches`
+    ListLocalBatchSnapshots returns a batch snapshot for all batches the trader
+    has participated in.
+    */
+    rpc ListLocalBatchSnapshots(ListLocalBatchSnapshotsRequest) returns (ListLocalBatchSnapshotsResponse) {
+        option (google.api.http) = {
+            get: "/v1/clm/accounts/batches"
+        };
+    }
+
+
+
     /* llm: `auction fee`
     AuctionFee returns the current auction order execution fee specified by the
     auction server.
@@ -398,6 +410,32 @@ message CancelOrderRequest {
     bytes order_nonce = 1;
 }
 message CancelOrderResponse {
+}
+
+message Match {
+    bytes order_nonce = 1;
+    uint32 units_filled = 2;
+    uint32 execution_fee_sat = 3;
+}
+
+message LocalBatchSnapshot {
+    bytes batch_id = 1;
+
+    uint32 batch_version = 2;
+
+    uint32 clearing_price = 4;
+    uint32 batch_tx_fee_rate_sat_per_kw = 5;
+
+    bytes batch_txid = 6;
+
+    repeated Match matches = 7;
+}
+
+message ListLocalBatchSnapshotsRequest {
+}
+
+message ListLocalBatchSnapshotsResponse {
+    repeated LocalBatchSnapshot batches = 1;
 }
 
 message Order {

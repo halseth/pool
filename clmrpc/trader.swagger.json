@@ -119,6 +119,29 @@
         ]
       }
     },
+    "/v1/clm/accounts/batches": {
+      "get": {
+        "summary": "llm: `auction listbatches`\nListLocalBatchSnapshots returns a batch snapshot for all batches the trader\nhas participated in.",
+        "operationId": "ListLocalBatchSnapshots",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/clmrpcListLocalBatchSnapshotsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/gatewayruntimeError"
+            }
+          }
+        },
+        "tags": [
+          "Trader"
+        ]
+      }
+    },
     "/v1/clm/accounts/deposit": {
       "post": {
         "summary": "llm: `accounts deposit`\nDepositAccount adds more funds from the connected lnd node's wallet to an\naccount.",
@@ -726,6 +749,17 @@
         }
       }
     },
+    "clmrpcListLocalBatchSnapshotsResponse": {
+      "type": "object",
+      "properties": {
+        "batches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/clmrpcLocalBatchSnapshot"
+          }
+        }
+      }
+    },
     "clmrpcListOrdersResponse": {
       "type": "object",
       "properties": {
@@ -739,6 +773,37 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/clmrpcBid"
+          }
+        }
+      }
+    },
+    "clmrpcLocalBatchSnapshot": {
+      "type": "object",
+      "properties": {
+        "batch_id": {
+          "type": "string",
+          "format": "byte"
+        },
+        "batch_version": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "clearing_price": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "batch_tx_fee_rate_sat_per_kw": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "batch_txid": {
+          "type": "string",
+          "format": "byte"
+        },
+        "matches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/clmrpcMatch"
           }
         }
       }
@@ -784,6 +849,23 @@
         "storage_name": {
           "type": "string",
           "description": "*\nIdentifying attribute of this token in the store. Currently represents the\nfile name of the token where it's stored on the file system."
+        }
+      }
+    },
+    "clmrpcMatch": {
+      "type": "object",
+      "properties": {
+        "order_nonce": {
+          "type": "string",
+          "format": "byte"
+        },
+        "units_filled": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "execution_fee_sat": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
