@@ -18,6 +18,7 @@ var auctionCommands = []cli.Command{
 		Subcommands: []cli.Command{
 			auctionFeeCommand,
 			batchSnapshotCommand,
+			listBatchesCommand,
 		},
 	},
 }
@@ -106,6 +107,38 @@ func batchSnapshot(ctx *cli.Context) error {
 	}
 
 	printRespJSON(batchSnapshot)
+
+	return nil
+}
+
+var listBatchesCommand = cli.Command{
+	Name:      "listbatches",
+	ShortName: "lb",
+	Usage:     "return a snapshot of all batches the trader has participated in",
+	Description: `
+		Returns information about all batches the trader has
+		participated in.
+		`,
+	Flags:  nil,
+	Action: listLocalBatches,
+}
+
+func listLocalBatches(ctx *cli.Context) error {
+	client, cleanup, err := getClient(ctx)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	ctxb := context.Background()
+	batches, err := client.ListLocalBatchSnapshots(
+		ctxb, &clmrpc.ListLocalBatchSnapshotsRequest{},
+	)
+	if err != nil {
+		return err
+	}
+
+	printRespJSON(batches)
 
 	return nil
 }
