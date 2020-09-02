@@ -133,8 +133,7 @@ func (s *batchStorer) StorePendingBatch(batch *Batch, bestHeight uint32) error {
 
 	// Everything is ready to be persisted now.
 	return s.orderStore.StorePendingBatch(
-		batch.ID, batch.BatchTX, orders, orderModifiers, accounts,
-		accountModifiers,
+		batch, orders, orderModifiers, accounts, accountModifiers,
 	)
 }
 

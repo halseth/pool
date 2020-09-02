@@ -41,9 +41,9 @@ var (
 // is rolled back. Once the batch has been finalized/confirmed on-chain, then
 // the stage modifications will be applied atomically as a result of
 // MarkBatchComplete.
-func (db *DB) StorePendingBatch(batchID order.BatchID, batchTx *wire.MsgTx,
-	orders []order.Nonce, orderModifiers [][]order.Modifier,
-	accounts []*account.Account, accountModifiers [][]account.Modifier) error {
+func (db *DB) StorePendingBatch(batch *order.Batch, orders []order.Nonce,
+	orderModifiers [][]order.Modifier, accounts []*account.Account,
+	accountModifiers [][]account.Modifier) error {
 
 	// Catch the most obvious problems first.
 	if len(orders) != len(orderModifiers) {
@@ -106,6 +106,7 @@ func (db *DB) StorePendingBatch(batchID order.BatchID, batchTx *wire.MsgTx,
 		if err != nil {
 			return err
 		}
+
 		for idx, acct := range accounts {
 			accountKey := getAccountKey(acct)
 			err := updateAccount(
@@ -118,14 +119,26 @@ func (db *DB) StorePendingBatch(batchID order.BatchID, batchTx *wire.MsgTx,
 		}
 
 		// Finally, write the ID and transaction of the pending batch.
+		batchID := batch.ID
 		if err := bucket.Put(pendingBatchIDKey, batchID[:]); err != nil {
 			return err
 		}
 		var buf bytes.Buffer
-		if err := WriteElement(&buf, batchTx); err != nil {
+		if err := WriteElement(&buf, batch.BatchTX); err != nil {
 			return err
 		}
-		return bucket.Put(pendingBatchTxKey, buf.Bytes())
+
+		txBytes := buf.Bytes()
+		err = bucket.Put(pendingBatchTxKey, txBytes)
+		if err != nil {
+			return err
+		}
+
+		// Before we are done, we store a snapshot of the orders and
+		// accounts modified by this batch, so we retain this history
+		// for later.
+		snapshot := NewSnapshot(batch)
+		return storeLocalBatchSnapshot(tx, snapshot)
 	})
 }
 
